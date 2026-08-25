@@ -250,4 +250,4 @@ USER_012 | ... | 提示手机号格式错误 | 11 位字母仍保存成功 | 失
 
 ## 九、下一步：上传 GitHub
 
-把这份 00–09 的文档 + 用例 + Bug 单 + 报告上传到 GitHub，作为面试时可展示的作品集。具体步骤见 [10-上传GitHub指南.md](10-上传GitHub指南.md)（待生成）。
+把这份 00–09 的文档 + 用例 + Bug 单 + 报告上传到 GitHub，作为面试时可展示的作品集。文档已上传至公开仓库 https://github.com/sviplch/RuoYi-Testing-Project。以后更新文档，在该目录下运行 `git add -A && git commit -m "更新说明" && git push`。
