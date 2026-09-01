@@ -2,3 +2,12 @@
 *.log
 Thumbs.db
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 测试报告生成物
+allure-report/
+allure-results/
