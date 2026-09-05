@@ -9,7 +9,7 @@ import urllib.request
 # ===== 配置区（按需修改）=====
 BASE_URL = 'http://localhost:8080'
 USERNAME = 'admin'
-PASSWORD = 'admin123'   # 复现 BUG_LOGIN_001 时改成错误密码，如 'wrong123'
+PASSWORD = 'admin123'   # 验证密码重试锁定：改成错误密码（如 'wrong123'），连续 5 次后应锁定
 RUNS = 10               # 回归次数
 
 REDIS_CLI_CANDIDATES = [
