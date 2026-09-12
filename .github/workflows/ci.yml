@@ -1,0 +1,109 @@
+name: API 自动化测试 CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_DATABASE: ry_vue
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p123456"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Checkout 测试项目
+        uses: actions/checkout@v4
+
+      - name: 安装 JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: 安装 Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: 安装 Python 依赖
+        run: pip install -r requirements.txt
+
+      - name: 安装 redis-cli 与 mysql 客户端
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y redis-tools mysql-client
+
+      - name: 拉取若依后端源码
+        run: |
+          git clone --depth 1 https://github.com/y_project/RuoYi-Vue.git /tmp/ruoyi
+          cd /tmp/ruoyi
+          # 尝试锁定到与本地验证一致的 v3.9.1；tag 不存在则用默认分支
+          git fetch --depth 1 origin tag v3.9.1 2>/dev/null && git checkout -q v3.9.1 || true
+          # 对齐本地环境：库名 ry_vue + 数据库密码 123456
+          sed -i 's/ry-vue/ry_vue/g' ruoyi-admin/src/main/resources/application-druid.yml
+          sed -i 's/password: password/password: 123456/' ruoyi-admin/src/main/resources/application-druid.yml
+
+      - name: 初始化数据库（改认证插件 + 导入初始化 SQL）
+        run: |
+          mysql -h127.0.0.1 -uroot -p123456 -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '123456'; FLUSH PRIVILEGES;"
+          RY_SQL=$(ls /tmp/ruoyi/sql/ry_*.sql | head -1)
+          mysql -h127.0.0.1 -uroot -p123456 ry_vue < "$RY_SQL"
+          mysql -h127.0.0.1 -uroot -p123456 ry_vue < /tmp/ruoyi/sql/quartz.sql
+
+      - name: 编译打包若依
+        run: |
+          cd /tmp/ruoyi
+          mvn clean package -DskipTests -q
+
+      - name: 启动若依后端
+        run: |
+          cd /tmp/ruoyi
+          nohup java -jar ruoyi-admin/target/ruoyi-admin.jar > /tmp/ruoyi.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/captchaImage | grep -q '"code"'; then
+              echo "后端已就绪（第 ${i} 次探测）"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "后端启动超时，末尾日志如下："
+          tail -100 /tmp/ruoyi.log
+          exit 1
+
+      - name: 运行 pytest 接口自动化用例
+        run: |
+          cd "代码"
+          python -m pytest 用户管理用例pytest.py 登录会话用例pytest.py 登录接口用例pytest.py -v --tb=short
+
+      - name: 上传后端日志（排查用）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruoyi-log
+          path: /tmp/ruoyi.log

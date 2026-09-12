@@ -47,6 +47,20 @@
 
 > 缺陷复现证据（源码证据链 + 实测响应体）见 [缺陷留证/](缺陷留证/)
 
+## CI/CD 自动化（GitHub Actions）
+
+push / PR 到仓库即自动触发完整接口测试流水线，配置见 [.github/workflows/ci.yml](.github/workflows/ci.yml)：
+
+```
+起 MySQL 8.0 + Redis 容器
+  → 拉取若依后端源码（锁定 v3.9.1）并编译打包
+  → 导入初始化 SQL（ry_vue 库 + quartz）
+  → 后台启动后端，轮询就绪
+  → 运行 pytest 接口自动化（用户管理 / 登录会话 / 登录接口，共 36 条）
+```
+
+> 本地手动跑：`pip install -r requirements.txt`，再 `cd 代码 && python -m pytest 用户管理用例pytest.py 登录会话用例pytest.py 登录接口用例pytest.py -v`（需本地已启动若依后端 + MySQL + Redis）
+
 ## 面试可讲的核心能力
 
 1. **读源码设计用例**：从 SysUser/SysRole 的校验注解里挖出「手机号无正则」等真实缺陷
@@ -54,3 +68,4 @@
 3. **数据权限与越权测试**：5 种数据范围（全部/自定义/本部门/本部门及以下/仅本人）横向+纵向越权验证
 4. **SQL 数据验证**：逻辑删除、级联清理、关联表脏数据检查
 5. **接口测试**：Postman 完整链路（验证码→登录→token→受保护接口）
+6. **CI/CD 落地**：GitHub Actions 自动拉起 MySQL/Redis + 编译启动被测系统 + 跑接口自动化，push 即回归
