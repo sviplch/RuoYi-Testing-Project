@@ -81,6 +81,8 @@ jobs:
 
       - name: 启动若依后端
         run: |
+          # logback.xml 写死日志目录 /home/ruoyi/logs，需先创建
+          sudo mkdir -p /home/ruoyi/logs && sudo chmod 777 /home/ruoyi/logs
           cd /tmp/ruoyi
           nohup java -jar ruoyi-admin/target/ruoyi-admin.jar > /tmp/ruoyi.log 2>&1 &
           for i in $(seq 1 60); do
