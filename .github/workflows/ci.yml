@@ -61,7 +61,7 @@ jobs:
 
       - name: 拉取若依后端源码
         run: |
-          git clone --depth 1 --branch v3.9.2 https://github.com/yangzongzhuan/RuoYi-Vue.git /tmp/ruoyi
+          git clone --depth 1 --branch v3.9.1 https://github.com/yangzongzhuan/RuoYi-Vue.git /tmp/ruoyi
           cd /tmp/ruoyi
           # 对齐本地环境：库名 ry_vue + 数据库密码 123456
           sed -i 's/ry-vue/ry_vue/g' ruoyi-admin/src/main/resources/application-druid.yml
