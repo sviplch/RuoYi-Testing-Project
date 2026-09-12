@@ -73,6 +73,8 @@ jobs:
           RY_SQL=$(ls /tmp/ruoyi/sql/ry_*.sql | head -1)
           mysql -h127.0.0.1 -uroot -p123456 ry_vue < "$RY_SQL"
           mysql -h127.0.0.1 -uroot -p123456 ry_vue < /tmp/ruoyi/sql/quartz.sql
+          # 造测试数据：登录用例 API_010 依赖的停用账号 disabled01
+          mysql -h127.0.0.1 -uroot -p123456 ry_vue -e 'INSERT INTO sys_user (dept_id, user_name, nick_name, user_type, email, phonenumber, sex, avatar, password, status, del_flag, login_ip, login_date, create_by, create_time, update_by, update_time, remark) VALUES (103, "disabled01", "停用测试", "00", "", "", "1", "", "$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2", "1", "0", "127.0.0.1", sysdate(), "admin", sysdate(), "", NULL, "CI测试数据");'
 
       - name: 编译打包若依
         run: |
